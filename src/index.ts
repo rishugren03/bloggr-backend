@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 
 import apiRoutes from './routes';
 
@@ -10,6 +11,12 @@ dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
+
+// Ensure the uploads directory exists
+const uploadsDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Middleware
 app.use(express.json());
@@ -19,7 +26,7 @@ app.use(cors({
 }));
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Routes
 app.get('/', (req: Request, res: Response) => {

@@ -7,7 +7,8 @@ const router = Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'src/public/uploads/');
+    const uploadPath = path.resolve(__dirname, '../../public/uploads');
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
