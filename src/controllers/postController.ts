@@ -1,91 +1,57 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
-import Post from '../models/Post';
+import * as postService from '../services/postService';
 import mongoose from 'mongoose';
-import slugify from 'slugify';
-import sanitizeHtml from 'sanitize-html';
 
 interface AuthRequest extends Request {
     user?: { id: string };
 }
 
-export const createPost = async (req: AuthRequest, res: Response) => {
+export const createPost = async (req: AuthRequest, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() });
-        return;
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    if (!req.user) {
+        return res.status(401).json({ msg: 'User not authenticated' });
     }
 
     const { title, content } = req.body;
-    const author = req.user?.id;
+    const authorId = req.user.id;
 
     try {
-        let slug = slugify(title, { lower: true, strict: true });
-        
-        // Ensure slug is unique
-        const existingPost = await Post.findOne({ slug });
-        if (existingPost) {
-            slug = `${slug}-${Date.now()}`;
-        }
-        
-        const sanitizedContent = sanitizeHtml(content, {
-            allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img' ]),
-            allowedAttributes: {
-                ...sanitizeHtml.defaults.allowedAttributes,
-                '*': [ 'class', 'style' ]
-            }
-        });
-
-        const newPost = new Post({
-            title,
-            slug,
-            content: sanitizedContent,
-            author,
-        });
-
-        const post = await newPost.save();
-        res.json(post);
+        const post = await postService.createNewPost(title, content, authorId);
+        res.status(201).json(post);
     } catch (err) {
-        if (err instanceof Error) {
-            console.error(err.message);
-        } else {
-            console.error(err);
-        }
-        res.status(500).send('Server Error');
+        next(err);
     }
 };
 
-export const getPosts = async (req: Request, res: Response) => {
+export const getPosts = async (req: Request, res: Response, next: NextFunction) => {
+    const authorId = req.query.author as string | undefined;
     try {
-        const authorId = req.query.author as string;
-        const filter = authorId ? { author: authorId } : {};
-
-        const posts = await Post.find(filter).populate('author', 'email');
+        const posts = await postService.getAllPosts(authorId);
         res.json(posts);
     } catch (err) {
-        if (err instanceof Error) {
-            console.error(err.message);
-        } else {
-            console.error(err);
-        }
-        res.status(500).send('Server Error');
+        next(err);
     }
 };
 
-export const getPostById = async (req: Request, res: Response): Promise<void> => {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        res.status(400).json({ msg: 'Invalid Post ID' });
-        return;
+export const getPostById = async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ msg: 'Invalid post ID' });
     }
+
     try {
-        const post = await Post.findById(req.params.id).populate('author', 'email');
+        const post = await postService.getPost(id);
         if (!post) {
-            res.status(404).json({ msg: 'Post not found' });
-            return;
+            return res.status(404).json({ msg: 'Post not found' });
         }
         res.json(post);
     } catch (err) {
-        console.log(err);
-        res.status(500).json({ msg: 'Server error' });
+        next(err);
     }
 }; 

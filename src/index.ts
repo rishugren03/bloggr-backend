@@ -28,10 +28,16 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api', apiRoutes);
 
-// Error handler
+// Generic error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+  console.error(err.stack);
+  const status = (err as any).statusCode || 500;
+  const message = err.message || 'Something broke!';
+  res.status(status).json({
+    errors: [
+      { msg: message }
+    ]
+  });
 });
 
 // Database connection
