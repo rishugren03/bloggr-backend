@@ -4,6 +4,7 @@ import { IUser } from './User';
 export interface IPost extends Document {
   title: string;
   content: string;
+  slug: string;
   author: IUser['_id'];
   createdAt: Date;
 }
@@ -13,6 +14,11 @@ const postSchema = new Schema<IPost>({
     type: String,
     required: true,
     trim: true,
+  },
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
   },
   content: {
     type: String,

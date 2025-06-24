@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import Post from '../models/Post';
+import mongoose from 'mongoose';
+import slugify from 'slugify';
 
 interface AuthRequest extends Request {
     user?: { id: string };
@@ -17,8 +19,17 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     const author = req.user?.id;
 
     try {
+        let slug = slugify(title, { lower: true, strict: true });
+        
+        // Ensure slug is unique
+        const existingPost = await Post.findOne({ slug });
+        if (existingPost) {
+            slug = `${slug}-${Date.now()}`;
+        }
+        
         const newPost = new Post({
             title,
+            slug,
             content,
             author,
         });
@@ -52,14 +63,20 @@ export const getPosts = async (req: Request, res: Response) => {
     }
 };
 
-export const getPostById = async (req: Request, res: Response) => {
+export const getPostById = async (req: Request, res: Response): Promise<void> => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400).json({ msg: 'Invalid Post ID' });
+        return;
+    }
     try {
         const post = await Post.findById(req.params.id).populate('author', 'email');
         if (!post) {
-            return res.status(404).json({ msg: 'Post not found' });
+            res.status(404).json({ msg: 'Post not found' });
+            return;
         }
         res.json(post);
     } catch (err) {
+        console.log(err);
         res.status(500).json({ msg: 'Server error' });
     }
 }; 
