@@ -1,27 +1,27 @@
-# Bloggr - Backend
+# Bloggr Backend
 
-This is the backend for the Bloggr platform, a personal blog where users can sign up, log in, and share their posts. It is built with Node.js, Express, and MongoDB, using TypeScript.
+This is the backend for the **Bloggr** platform, a full-featured blogging application. It is built with Node.js, Express, and MongoDB, and written in TypeScript to ensure type safety and scalability.
 
-## Features
+## ✨ Features
 
--   **Authentication:** Secure user signup and login using JWT.
--   **Post Management:** Create, read, and filter posts.
--   **Image Uploads:** Supports image uploads for posts, stored locally.
--   **Rich Text:** Handles and sanitizes HTML content from a rich text editor.
--   **Scalable Structure:** Organized into controllers, routes, models, and middlewares.
+-   **Robust Authentication:** Secure user signup and login using JSON Web Tokens (JWT).
+-   **Post Management:** Full CRUD (Create, Read, Update, Delete) functionality for posts.
+-   **Rich Content:** Supports rich text content with HTML sanitization to prevent XSS attacks.
+-   **Image Uploads:** Handles image uploads for posts, with files stored on the server.
+-   **Scalable Architecture:** A clean, modular structure separating concerns into controllers, services, routes, and models.
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
--   Node.js (v18 or newer)
--   MongoDB (A local instance or a cloud-based one like MongoDB Atlas)
+-   [Node.js](https://nodejs.org/) (v18 or newer recommended)
+-   [MongoDB](https://www.mongodb.com/) (A local instance or a cloud-based one like MongoDB Atlas)
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd <your-repo-folder>/bloggr-backend
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name/bloggr-backend
 ```
 
 ### 2. Install Dependencies
@@ -32,108 +32,76 @@ npm install
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file in the `bloggr-backend` root directory and add the following variables:
+Create a `.env` file in the `bloggr-backend` root directory by copying the example file:
+
+```bash
+cp .env.example .env
+```
+
+Then, open the `.env` file and add your configuration values:
 
 ```env
-# Your MongoDB connection string
+# The connection string for your MongoDB database
 MONGO_URI=mongodb+srv://<user>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority
 
-# A strong, secret string for signing JWTs
-JWT_SECRET=your-super-secret-jwt-key
+# A strong, secret string used for signing JWTs
+JWT_SECRET=your-super-secret-and-long-jwt-key
+
+# The port the server will run on (optional, defaults to 5000)
+PORT=5000
 ```
 
 ### 4. Run the Development Server
+
+The server uses `ts-node-dev` to automatically restart on file changes.
 
 ```bash
 npm run dev
 ```
 
-The server will start on `http://localhost:5000`.
-
-## API Endpoints
-
--   `POST /api/auth/signup`: Register a new user.
--   `POST /api/auth/login`: Log in a user.
--   `POST /api/posts/create`: Create a new post (requires auth token).
--   `GET /api/posts/get`: Get all posts.
--   `GET /api/posts/get?author=:userId`: Get all posts by a specific author.
--   `GET /api/posts/getbyid/:id`: Get a single post by its ID.
--   `POST /api/upload`: Upload an image (requires auth token).
+The API will be available at `http://localhost:5000`.
 
 ## Project Structure
 
 ```
 bloggr-backend/
+├── public/
+│   └── uploads/        # Statically served directory for uploaded images
 ├── src/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   ├── middlewares/
-│   ├── utils/
-│   └── index.ts
-├── .env
-├── .env.example
-├── tsconfig.json
-└── package.json
+│   ├── controllers/    # Express controllers to handle request logic
+│   ├── middlewares/    # Custom middleware (e.g., authentication)
+│   ├── models/         # Mongoose models for database schemas
+│   ├── routes/         # API route definitions
+│   ├── services/       # Business logic separated from controllers
+│   ├── utils/          # Utility functions (e.g., validation)
+│   └── index.ts        # Main server entry point
+├── .env                # Local environment variables (ignored by Git)
+├── .env.example        # Example environment variables
+├── package.json
+└── tsconfig.json
 ```
 
-## Final Output for Frontend Integration
+##  API Endpoints
 
-### ✅ API Routes:
-- **`POST /api/auth/signup`**: Register a new user.
-  - **Body**: `{ "email": "user@example.com", "password": "password123" }`
-- **`POST /api/auth/login`**: Authenticate a user.
-  - **Body**: `{ "email": "user@example.com", "password": "password123" }`
-  - **Returns**: `{ "token": "jwt.token.here" }`
-- **`POST /api/posts/create`**: Create a new post. (JWT Protected)
-  - **Body**: `{ "title": "My First Post", "content": "This is the content of my post." }`
-- **`GET /api/posts/get`**: Retrieve all blog posts.
-- **`GET /api/posts/get?author=userId`**: Retrieve all posts by a specific author.
-- **`GET /api/posts/getbyid/:id`**: Retrieve a single post by its ID.
-- **`POST /api/upload`**: Upload an image for a post. (JWT Protected)
+All endpoints are prefixed with `/api`.
 
-### 🪝 Client Auth Integration:
-- For protected routes like `POST /api/posts/create`, the JWT must be sent in the request header:
-  `Authorization: Bearer <token>`
+| Method | Endpoint                    | Description                       | Auth Required |
+| :----- | :-------------------------- | :-------------------------------- | :------------ |
+| `POST` | `/auth/signup`              | Register a new user.              | No            |
+| `POST` | `/auth/login`               | Log in a user and get a JWT.      | No            |
+| `POST` | `/posts/create`             | Create a new post.                | **Yes**       |
+| `GET`  | `/posts/get`                | Get all posts.                    | No            |
+| `GET`  | `/posts/get?author=:userId` | Get all posts by a specific user. | No            |
+| `GET`  | `/posts/getbyid/:id`        | Get a single post by its ID.      | No            |
+| `POST` | `/upload`                   | Upload an image for a post.       | **Yes**       |
 
-### 🧪 Sample `curl` Requests
+### Client Integration Notes
 
-1.  **Sign Up**
-    ```bash
-    curl -X POST http://localhost:5000/api/auth/signup \
-    -H "Content-Type: application/json" \
-    -d '{"email": "testuser@example.com", "password": "password123"}'
-    ```
+-   For protected routes, the JWT must be sent in the `Authorization` header as a Bearer token:
+    `Authorization: Bearer <your_jwt_token>`
 
-2.  **Login**
-    ```bash
-    curl -X POST http://localhost:5000/api/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"email": "testuser@example.com", "password": "password123"}'
-    ```
-    *(Save the returned token for the next request)*
+-   The `/upload` endpoint expects a `multipart/form-data` request with the image file in a field named `image`.
 
-3.  **Create a Post (replace `<YOUR_JWT_TOKEN>` with your token)**
-    ```bash
-    curl -X POST http://localhost:5000/api/posts/create \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
-    -d '{"title": "My Awesome Post", "content": "Hello world from my new blog!"}'
-    ```
+---
 
-4.  **Get All Posts**
-    ```bash
-    curl http://localhost:5000/api/posts/get
-    ```
-
-5.  **Get a Single Post**
-    ```bash
-    curl http://localhost:5000/api/posts/getbyid/<post-id>
-    ```
-
-6. **Upload an Image**
-    ```bash
-    curl -X POST http://localhost:5000/api/upload \
-    -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
-    -F "image=@path/to/your/image.jpg"
-    ``` 
+_This README was generated with assistance from an AI pair programmer._ 
