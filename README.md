@@ -101,7 +101,3 @@ All endpoints are prefixed with `/api`.
     `Authorization: Bearer <your_jwt_token>`
 
 -   The `/upload` endpoint expects a `multipart/form-data` request with the image file in a field named `image`.
-
----
-
-_This README was generated with assistance from an AI pair programmer._ 
