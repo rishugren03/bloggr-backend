@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import Post from '../models/Post';
 import mongoose from 'mongoose';
 import slugify from 'slugify';
+import sanitizeHtml from 'sanitize-html';
 
 interface AuthRequest extends Request {
     user?: { id: string };
@@ -27,10 +28,18 @@ export const createPost = async (req: AuthRequest, res: Response) => {
             slug = `${slug}-${Date.now()}`;
         }
         
+        const sanitizedContent = sanitizeHtml(content, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img' ]),
+            allowedAttributes: {
+                ...sanitizeHtml.defaults.allowedAttributes,
+                '*': [ 'class', 'style' ]
+            }
+        });
+
         const newPost = new Post({
             title,
             slug,
-            content,
+            content: sanitizedContent,
             author,
         });
 

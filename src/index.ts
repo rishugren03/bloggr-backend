@@ -2,31 +2,39 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
 
-import authRoutes from './routes/authRoutes';
-import postRoutes from './routes/postRoutes';
+import apiRoutes from './routes';
 
 dotenv.config();
 
 const app: Express = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Middleware
 app.use(express.json());
+app.use(cors({
+    origin: 'http://localhost:3000', 
+    credentials: true
+}));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+// Routes
 app.get('/', (req: Request, res: Response) => {
   res.send('Bloggr API is running!');
 });
 
-// Generic error handler
+app.use('/api', apiRoutes);
+
+// Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
 
+// Database connection
 const mongoUri = process.env.MONGO_URI;
 
 if (!mongoUri) {
